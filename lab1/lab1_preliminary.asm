@@ -1,0 +1,356 @@
+##
+##	CS224 Spring 2024
+##	Lab 1
+##	Sectıon 1
+##	Mehmet Akif Şahin
+##	22203673	
+##	17 / 02 / 2024
+##
+##
+##  	lab1_preliminary.asm - takes a list of integers from the user and does operations on them
+##
+##	$s0 - contains the number of integers
+##	$s1 - contains the code for selected operation by the user
+##	$s2 - contains the number N is required for the operations
+##
+
+#################################
+#				#
+#	text segment		#
+#				#
+#################################
+
+	.text		
+
+__start:
+	la $a0, askN
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+	
+	move $s0, $v0 			# $s0 contains number of integers in the array
+	
+	li $s1, 0 			# input loop index variable
+	
+__inputLoop:
+	beq $s0, $s1, __menu 	# continue while index != N (number of items)
+	
+	la $a0, askInt			
+	li $v0, 4
+	syscall				#
+	move $a0, $s1			
+	li $v0, 1
+	syscall				#
+	la $a0, askIntCnt
+	li $v0, 4
+	syscall				# 3 syscalls for integer input text
+	
+	li $v0, 5
+	syscall				# get the integer input
+	
+	sll $t0, $s1, 2			# loop index => word offset
+	la $t1, array
+	add $t0, $t0, $t1 		# adding base addres to get the address of the word that will store the new input
+	
+	addi $s1, $s1, 1		# increase loop index
+	
+	
+	sw $v0, 0($t0)		# put the integer in the array's next word
+	
+	j __inputLoop
+	
+__menu:
+
+	jal __newline
+	
+	la $a0, menu
+	li $v0, 4
+	syscall
+	
+	li $v0, 12
+	syscall
+	
+	move $s1, $v0			# $s1 contains the user selection
+
+	jal __newline
+	jal __newline
+	
+
+__case_a:
+	li $t0, 'a'
+	bne $t0, $s1, __case_b
+	
+	# if the selection is 'a', do the following
+	# Find the number of array members equal to N.
+	
+	# First take the integer input N.
+	# Then, simply iterate over all elements of the array and increment a counter when the element is equal to N.
+	
+	la $a0, enterN
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+
+	move $s2, $v0			# $s2 contains N
+	
+	jal __newline
+	
+	
+	li $s3, 0 			# loop variable
+	li $s4, 0			# count variable, contains the number of the elements that is equal to N.
+	
+__case_a_loop:
+	beq $s3, $s0, __case_a_finish	# $s0 contains number of elements in the array
+	
+	sll $t1, $s3, 2			# loop index => word offset
+	la $t2, array
+	add $t1, $t1, $t2		# adding base addres of the next array element 
+	
+	lw $t3, 0($t1)			# reading the array element
+	
+	addi $s3, $s3, 1 		# increase loop variable
+	
+	bne $t3, $s2, __case_a_loop	# if array element equals to N
+	addi $s4, $s4, 1		# increase count
+	j __case_a_loop
+	
+__case_a_finish:
+
+	la $a0, caseAOutput
+	li $v0, 4
+	syscall
+	move $a0, $s2
+	li $v0, 1
+	syscall
+	la $a0, caseAOutputCont
+	li $v0, 4
+	syscall
+	move $a0, $s4
+	li $v0 1
+	syscall
+	jal __newline
+	
+	j __menu
+	
+__case_b:
+	li $t0, 'b'
+	bne $t0, $s1, __case_c
+	
+	# if the selection is 'b', do the following
+	# Find the number of array members less than N.
+
+	# First take the integer input N.
+	# Then, simply iterate over all elements of the array and increment a counter when the element is less than N.
+	
+	la $a0, enterN
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+
+	move $s2, $v0			# $s2 contains N
+	
+	jal __newline
+	
+	li $s3, 0 			# loop variable
+	li $s4, 0			# count variable, contains the number of the elements that is less than N.
+	
+__case_b_loop:
+	beq $s3, $s0, __case_b_finish	# $s0 contains number of elements in the array
+	
+	sll $t1, $s3, 2			# loop index => word offset
+	la $t2, array
+	add $t1, $t1, $t2		# adding base addres of the next array element 
+	
+	lw $t3, 0($t1)			# reading the array element
+	
+	addi $s3, $s3, 1 		# increase loop variable
+	
+	slt $t4, $t3, $s2		
+	beq $t4, $zero, __case_b_loop	# if array element is less than N
+	addi $s4, $s4, 1		# increase count
+	j __case_b_loop
+	
+__case_b_finish:
+
+	la $a0, caseBOutput
+	li $v0, 4
+	syscall
+	move $a0, $s2
+	li $v0, 1
+	syscall
+	la $a0, caseBOutputCont
+	li $v0, 4
+	syscall
+	move $a0, $s4
+	li $v0 1
+	syscall
+	jal __newline
+	
+	j __menu
+
+__case_c:
+	li $t0, 'c'
+	bne $t0, $s1, __case_d
+	# if the selection is 'c', do the following
+	# Find the number of array members greater than N.
+	
+	# First take the integer input N.
+	# Then, simply iterate over all elements of the array and increment a counter when the element is greater than N.
+	
+	la $a0, enterN
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+
+	move $s2, $v0			# $s2 contains N
+	
+	jal __newline
+	
+	li $s3, 0 			# loop variable
+	li $s4, 0			# count variable, contains the number of the elements that is greater than N.
+	
+__case_c_loop:
+	beq $s3, $s0, __case_c_finish	# $s0 contains number of elements in the array
+	
+	sll $t1, $s3, 2			# loop index => word offset
+	la $t2, array
+	add $t1, $t1, $t2		# adding base addres of the next array element 
+	
+	lw $t3, 0($t1)			# reading the array element
+	
+	addi $s3, $s3, 1 		# increase loop variable
+	
+	slt $t4, $s2, $t3		
+	beq $t4, $zero, __case_c_loop	# if array element is greater than N
+	addi $s4, $s4, 1		# increase count
+	j __case_c_loop
+	
+__case_c_finish:
+
+	la $a0, caseCOutput
+	li $v0, 4
+	syscall
+	move $a0, $s2
+	li $v0, 1
+	syscall
+	la $a0, caseCOutputCont
+	li $v0, 4
+	syscall
+	move $a0, $s4
+	li $v0 1
+	syscall
+	jal __newline
+	
+	j __menu
+	
+__case_d:
+	li $t0, 'd'
+	bne $t0, $s1, __case_default
+	# if the selection is 'c', do the following
+	# Find the number of elements evenly divisible by N.
+
+	# First take the integer input N.
+	# Then, simply iterate over all elements of the array and increment a counter when the element is evenly divisible by N.
+	
+	la $a0, enterN
+	li $v0, 4
+	syscall
+	
+	li $v0, 5
+	syscall
+
+	move $s2, $v0			# $s2 contains N
+	
+	jal __newline
+	
+	li $s3, 0 			# loop variable
+	li $s4, 0			# count variable, contains the number of the elements that is evenly divisible by N.
+	
+__case_d_loop:
+	beq $s3, $s0, __case_d_finish	# $s0 contains number of elements in the array
+	
+	sll $t1, $s3, 2			# loop index => word offset
+	la $t2, array
+	add $t1, $t1, $t2		# adding base addres of the next array element 
+	
+	lw $t3, 0($t1)			# reading the array element
+	
+	addi $s3, $s3, 1 		# increase loop variable
+	
+	div $t3, $s2
+	mfhi $t4
+	bne $t4, $zero, __case_d_loop	# if array element is evenly divisible by N
+	addi $s4, $s4, 1		# increase count
+	j __case_d_loop
+	
+__case_d_finish:
+
+	la $a0, caseDOutput
+	li $v0, 4
+	syscall
+	move $a0, $s2
+	li $v0, 1
+	syscall
+	la $a0, caseDOutputCont
+	li $v0, 4
+	syscall
+	move $a0, $s4
+	li $v0 1
+	syscall
+	jal __newline
+	
+	j __menu
+
+__case_default:
+	# if the selection is none of the above, terminate the program.
+	
+	li $v0, 10
+	syscall
+		
+		
+__newline:
+
+	la $a0, endl
+	li $v0, 4
+	syscall
+	
+	jr $ra
+	
+#################################
+#				#
+#     	 data segment		#
+#				#
+#################################
+
+		.data
+array:			.space 80 # Allocate 80 bytes = space enough to hold 20 integers each one is one word
+endl:			.asciiz "\n"
+askN:			.asciiz "Please enter the number of integers to be stored in the array : "
+askInt:			.asciiz "Please enter array["
+askIntCnt: 		.asciiz "] : "
+menu: 			.ascii "a. Find the number of array members equal to N.\n"
+			.ascii "b. Find the number of array members less than N.\n"
+			.ascii "c. Find the number of array members greater than N.\n"
+			.ascii "d. Find the number of elements evenly divisible by N.\n"
+			.asciiz "Please enter your selection (any other character will terminate the program) : "
+enterN:			.asciiz "Please enter N : "
+caseAOutput:		.asciiz "Number of the array members equal to "
+caseAOutputCont:	.asciiz " is : "
+caseBOutput:		.asciiz "Number of the array members less than "
+caseBOutputCont:	.asciiz " is : "
+caseCOutput:		.asciiz "Number of the array members greater than "
+caseCOutputCont:	.asciiz " is : "
+caseDOutput:		.asciiz "Number of the array members evenly divisible by "
+caseDOutputCont:	.asciiz " is : "
+
+
+##
+## end of file lab1_preliminary.asm

@@ -1,0 +1,227 @@
+.text
+
+main:
+	#jal 	askSize
+	#move 	$s1, $v0
+	
+		li $s1, 50
+	
+	move 	$a0, $s1
+	jal 	allocateMatrix
+	move 	$s0, $v0
+
+	move 	$a0, $s0
+	move 	$a1, $s1
+	jal 	initializeMatrix
+
+	#jal 	askElement
+
+	#move 	$a2, $v0
+	#move	$a3, $v1
+	#move 	$a0, $s0
+	#move 	$a1, $s1
+	#jal 	getElement
+	
+	#move 	$a0, $v0
+	#jal 	printElement
+	
+	li 	$v0, 4
+	la 	$a0, rowOrColumnPrompt
+	syscall
+	
+	li 	$v0, 5
+	syscall
+
+	beq $v0, 1, row
+	beq $v0, 2, column
+	j mainEnd
+	
+row:
+	move 	$a0, $s0
+	move 	$a1, $s1
+	jal 	rowSum
+	j mainEnd
+
+column:	
+	move 	$a0, $s0
+	move 	$a1, $s1
+	jal 	columnSum
+	j mainEnd
+
+mainEnd:
+	li 	$v0 10
+	syscall
+
+
+askSize:
+	li 	$v0, 4
+	la 	$a0, enterSize
+	syscall
+	
+	li 	$v0, 5
+	syscall
+	jr 	$ra
+
+
+allocateMatrix:
+	mul 	$a0, $a0, $a0
+	li 	$v0, 9
+	syscall
+	jr 	$ra
+
+initializeMatrix:
+	mul 	$a1, $a1, $a1
+	addi 	$t0, $0, 1
+	
+initializationLoop:
+	blt 	$a1, $t0, initializationLoopEnd
+
+	addi 	$t1, $t0, -1
+	sll 	$t1, $t1, 2
+	add 	$t1, $t1, $a0
+	sw 	$t0, 0($t1)
+	addi 	$t0, $t0, 1
+	j 	initializationLoop
+initializationLoopEnd:
+	jr 	$ra
+	
+askElement:
+	li 	$v0, 4
+	la 	$a0, askElementPrompt
+	syscall
+	
+	li 	$v0, 4
+	la 	$a0, rowPrompt
+	syscall
+	
+	li 	$v0, 5
+	syscall
+	move 	$t0, $v0
+	
+	li 	$v0, 4
+	la 	$a0, columnPrompt
+	syscall
+	
+	li 	$v0, 5
+	syscall
+	move 	$t1, $v0
+	
+	move 	$v0, $t0
+	move 	$v1, $t1
+	
+	jr	$ra
+
+getElement:
+	mul 	$t0, $a1, $a2
+	add 	$t0, $t0, $a3
+	sll 	$t0, $t0, 2
+	add 	$t0, $t0, $a0
+	lw 	$v0, 0($t0)
+	jr 	$ra
+	
+printElement:
+	move 	$t0, $a0
+	li 	$v0, 4
+	la 	$a0, printElementPrompt
+	syscall
+	
+	li	$v0, 1
+	move 	$a0, $t0	
+	syscall
+	
+	li	$v0, 11
+	li 	$a0, '\n'	
+	syscall 
+	
+	jr 	$ra
+
+rowSum:
+	move 	$t0, $a0
+	move 	$t1, $a1
+	
+	add 	$t2, $0, $0
+rowLoop:
+	add 	$t4, $0, $0
+	add 	$t3, $0, $0
+rowLoopInner:
+	mul	$t5, $t2, $t1
+	add 	$t5, $t5, $t3
+	sll 	$t5, $t5, 2
+	add	$t5, $t5, $t0 
+	lw	$t5, 0($t5)
+	add 	$t4, $t4, $t5
+	addi	$t3, $t3, 1
+	blt 	$t3, $t1, rowLoopInner
+	
+	# li	$v0, 1
+	# move 	$a0, $t2	
+	# syscall
+	
+	# li 	$v0, 4
+	# la 	$a0, rowSumPrompt
+	# syscall
+	
+	# li	$v0, 1
+	# move 	$a0, $t4	
+	# syscall
+	
+	# li	$v0, 11
+	# li 	$a0, '\n'	
+	# syscall
+	
+	addi 	$t2, $t2, 1
+	blt 	$t2, $t1, rowLoop
+
+	jr 	$ra
+
+
+columnSum:
+	move 	$t0, $a0
+	move 	$t1, $a1
+	
+	add 	$t2, $0, $0
+columnLoop:
+	add 	$t4, $0, $0
+	add 	$t3, $0, $0
+columnLoopInner:
+	mul	$t5, $t3, $t1
+	add 	$t5, $t5, $t2
+	sll 	$t5, $t5, 2
+	add	$t5, $t5, $t0 
+	lw	$t5, 0($t5)
+	add 	$t4, $t4, $t5
+	addi	$t3, $t3, 1
+	blt 	$t3, $t1, columnLoopInner
+	
+	# li	$v0, 1
+	# move 	$a0, $t2	
+	# syscall
+	
+	# li 	$v0, 4
+	# la 	$a0, columnSumPrompt
+	# syscall
+	
+	# li	$v0, 1
+	# move 	$a0, $t4	
+	# syscall
+	
+	# li	$v0, 11
+	# li 	$a0, '\n'	
+	# syscall
+	
+	addi 	$t2, $t2, 1
+	blt 	$t2, $t1, columnLoop
+
+	jr 	$ra
+
+
+
+.data
+enterSize: 		.asciiz "Please enter the dimension of matrix (NxN): "
+askElementPrompt: 	.asciiz "Please enter row and column indexes of the element you want to display: \n"
+columnPrompt: 		.asciiz "Column :"
+rowPrompt: 		.asciiz "Row :"
+printElementPrompt: 	.asciiz "The element corresponding to given row and columns is: "
+rowSumPrompt:		.asciiz "st row sum is: "
+columnSumPrompt:	.asciiz "st column sum is: "
+rowOrColumnPrompt:	.asciiz "Enter 1 for row sum, enter 2 for column sum: "

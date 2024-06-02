@@ -1,0 +1,168 @@
+Course No.:CS224 
+Lab No.: 7
+Section No.: 1
+Full Name: Mehmet Akif Şahin
+Bilkent ID: 22203673
+Date: 05/06/24
+
+Course No.:CS224 
+Lab No.: 7
+Section No.: 1
+Full Name: Emir Ensar Sevil
+Bilkent ID: 22201926
+Date: 05/06/24
+
+DC Motor
+
+
+/*
+Configuration for the code below:
+
+Connect portA to Motor
+Jumpers of portA are : 5V, pull up ( top one to left, other to left )
+
+Connect portE to Buttons
+Jumpers of portE are : 3.3V, pull up ( top one to left, other to left )
+
+*/
+
+// These variables are used for button debouncing.
+// lastB0 stands for the previous value of button 0.
+// lastB1 stands for the previous value of button 1.
+unsigned char lastB0 = 1;
+unsigned char lastB1 = 1;
+
+void main() {
+
+	AD1PCFG = 0xFFFF; 	// configure the analog input pins as digital I/O.
+	DDPCON.JTAGEN = 0; 	// disable JTAG
+
+	TRISA = 0x0000;  	// portA is output to drive motor.
+	TRISE = 0XFFFF;  	// portE is inputs to read push-buttons.
+
+	// initial values for port A and E
+	LATA = 0Xffff;		
+	LATE = 0X0000;
+
+	// initial delay
+	Delay_ms(100);
+
+	while(1)
+	{
+		// if the value of the buttons is the same as before
+		if ( lastB0 == portEbits.RE0 && lastB1 == portEbits.RE1 ) {
+			// update debouncer variables
+			lastB0 = portEbits.RE0;
+			lastB1 = portEbits.RE1;
+			continue;
+		}
+		// if button 0 is pushed and button 1 is not pushed
+		if ( portEbits.RE0 == 0 && portEbits.RE1 == 1 ) {
+			Delay_ms(1000);		// after 1 second
+			portAbits.RA1 = 1;	
+			portAbits.RA2 = 0;	// drive motor clockwise
+		}
+		// if button 1 is pushed and button 0 is not pushed
+		else if ( portEbits.RE0 == 1 && portEbits.RE1 == 0 ) {
+			Delay_ms(1000);		// after 1 second
+			portAbits.RA1 = 0;	// drive motor counter-clockwise
+			portAbits.RA2 = 1;
+		}
+		// if both button 0 and 1 is pushed
+		else if ( portEbits.RE0 == 0 && portEbits.RE1 == 0 ) {
+			Delay_ms(1000);		// after 1 second
+			portAbits.RA1 = 1;	// stop motor
+			portAbits.RA2 = 1;
+		}
+		// update debouncer variables
+		lastB0 = portEbits.RE0;
+		lastB1 = portEbits.RE1;
+	}//while
+}//main
+
+Involved SFRs
+
+AD1PCFG
+DDPCON.JTAGEN
+TRISA, TRISE
+LATA, LATE
+PORTE, PORTA
+
+
+Seven Segment Module
+
+
+/*
+Configuration for the code below:
+
+Connect portA to J1 Port of 4 Digit Seven Segment Module
+Jumpers of portA are 5V, pull down ( top one to left, other to right )
+
+Connect portE to J2 Port of 4 Digit Seven Segment Module.
+Jumpers of portE are 5V, pull down ( top one to left, other to right )
+
+*/
+
+// patterns so that binary_pattern[x] will display the digit x in the seven segment
+unsigned char binary_pattern[]={0x3F,0x06,0x5B,0x4F,0x66,0x6D,0x7D,0x07,0x7F,0x6F};
+
+// 2 variables for calculating the Fibonacci sequence
+unsigned int fib = 1;
+unsigned int fib_prev = 0;
+
+// a variable used to count wait times
+unsigned int k = 0;
+
+void main() {
+
+	AD1PCFG = 0xFFFF;      	// configure the analog input pins as digital I/O.
+	JTAGEN_bit = 0;        	// Disable JTAG
+
+	TRISA = 0x00;  		//portA is output
+	TRISE = 0X00;  		//portE is output
+
+	while(1)
+	{
+		// For every digit, there is a 1 ms delay so that to display 4 digits 
+		//There are 4 ms of delay.
+		// Waiting time is requested to be fibonacci_value * 100 so there must be fibonacci_value * 25 iterations
+		// to wait fibonacci_value * 25 * 4 ms = fibonacci_value * 100 ms
+		while ( k < fib * 25 ) {
+			// Digit 1
+			PORTA=binary_pattern[fib / 1000];
+			PORTE=0x01; // enable digit 1
+			Delay_ms(1);
+			
+			// Digit 2
+			PORTA=binary_pattern[(fib % 1000) / 100];
+			PORTE=0x02; // enable digit 2
+			Delay_ms(1);
+
+			// Digit 3
+			PORTA=binary_pattern[(fib % 100) / 10];
+			PORTE=0x04; // enable digit 3
+			Delay_ms(1);
+
+			// Digit 4
+			PORTA=binary_pattern[fib % 10];
+			PORTE=0x08; // enable digit 4
+			Delay_ms(1);
+
+			k++;
+		}
+
+		// calculating the next Fibonacci sequence element
+		fib = fib + fib_prev;
+		// updating previous value
+		fib_prev = fib - fib_prev;
+	}//while
+}//main
+
+
+Involved SFRs
+
+AD1PCFG
+DDPCON
+JTAGEN_bit 
+TRISA, TRISE
+PORTA, PORTE
